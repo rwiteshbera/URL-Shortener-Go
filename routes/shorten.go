@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v9"
+	"github.com/google/uuid"
 	"github.com/rwiteshbera/URL-Shortener-Go/database"
 	"github.com/rwiteshbera/URL-Shortener-Go/helpers"
 )
@@ -46,17 +48,17 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 		if err == redis.Nil {
 			_ = r.Set(database.Ctx, ctx.ClientIP(), os.Getenv("API_QUOTA"), 30*60*time.Second).Err() // 30 minutes to expire
 		} else {
-			val, _ := r.Get(database.Ctx, ctx.ClientIP()).Result()
-			valueInt, _ := strconv.Atoi(val)
+			valueInt, _ := strconv.Atoi(value)
 
 			if valueInt <= 0 {
 				limit, _ := r.TTL(database.Ctx, ctx.ClientIP()).Result()
 				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "Rate limit exceeded", "limit": limit})
+				return
 			}
 		}
 
 		// Check if the input is an actual url
-		if !goValidator.isURL(req.URL) {
+		if !govalidator.IsURL(req.URL) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
 			return
 		}
@@ -70,8 +72,39 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 		// enfore https, SSL
 		req.URL = helpers.EnforceHTTP(req.URL)
 
+		// Generate shorten URL
+		id := uuid.New().String()[:6]
+
+		r = database.CreateClient(0)
+		defer r.Close()
+
+		if req.Expiry == 0 {
+			req.Expiry = 24 // 24 Hours (Default)
+		}
+
+		err = r.Set(database.Ctx, id, req.URL, req.Expiry*3600*time.Second).Err()
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+
 		r.Decr(database.Ctx, ctx.ClientIP())
 
-		ctx.JSON(http.StatusOK, gin.H{"req": req})
+		resp := response{
+			URL:             req.URL,
+			CustomShort:     "",
+			Expiry:          req.Expiry,
+			XRateRemaining:  10,
+			XRateLimitReset: 30,
+		}
+
+		val, _ := r.Get(database.Ctx, ctx.ClientIP()).Result()
+		resp.XRateRemaining, _ = strconv.Atoi(val)
+
+		ttl, _ := r.TTL(database.Ctx, ctx.ClientIP()).Result()
+		resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
+
+		resp.CustomShort = os.Getenv("DOMAIN") + "/" + id
+
+		ctx.JSON(http.StatusOK, gin.H{"response": resp})
 	})
 }
