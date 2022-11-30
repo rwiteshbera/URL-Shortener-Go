@@ -32,8 +32,6 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 		var req request
 
 		err := ctx.BindJSON(&req)
-
-		req.Expiry = 24 * time.Hour
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -92,7 +90,7 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 			return
 		}
 
-		err = urlDatabase.Set(database.Ctx, id, req.URL, req.Expiry*3600*time.Second).Err()
+		err = urlDatabase.Set(database.Ctx, id, req.URL, req.Expiry*time.Hour).Err()
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
