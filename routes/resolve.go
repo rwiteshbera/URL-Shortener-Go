@@ -9,13 +9,13 @@ import (
 )
 
 func ResolveURL(incomingRoutes *gin.Engine) {
-	incomingRoutes.GET("/api", func(ctx *gin.Context) {
-		url := ctx.Param("url")
+	incomingRoutes.GET("/:id", func(ctx *gin.Context) {
+		url := ctx.Param("id")
 
-		r := database.CreateClient(0)
-		defer r.Close()
+		urlDatabase := database.CreateClient(0)
+		defer urlDatabase.Close()
 
-		value, err := r.Get(database.Ctx, url).Result()
+		value, err := urlDatabase.Get(database.Ctx, url).Result()
 		if err == redis.Nil {
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "short not found"})
 			return
@@ -23,12 +23,6 @@ func ResolveURL(incomingRoutes *gin.Engine) {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cannot connect to database"})
 			return
 		}
-
-		incrementCount := database.CreateClient(1)
-		defer incrementCount.Close()
-
-		_ = incrementCount.Incr(database.Ctx, "counter")
-
 		ctx.Redirect(http.StatusMovedPermanently, value)
 	})
 }

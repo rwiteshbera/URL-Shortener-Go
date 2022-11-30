@@ -15,9 +15,8 @@ import (
 )
 
 type request struct {
-	URL         string        `json:"url"`
-	CustomShort string        `json:"short"`
-	Expiry      time.Duration `json:"expiry"`
+	URL    string        `json:"url"`
+	Expiry time.Duration `json:"expiry"`
 }
 
 type response struct {
@@ -41,18 +40,18 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 		}
 
 		// Implement rate limiting
-		r := database.CreateClient(1)
-		defer r.Close()
+		ipDatabase := database.CreateClient(1)
+		defer ipDatabase.Close()
 
-		value, err := r.Get(database.Ctx, ctx.ClientIP()).Result()
+		value, err := ipDatabase.Get(database.Ctx, ctx.ClientIP()).Result()
 		if err == redis.Nil {
-			_ = r.Set(database.Ctx, ctx.ClientIP(), os.Getenv("API_QUOTA"), 30*60*time.Second).Err() // 30 minutes to expire
+			_ = ipDatabase.Set(database.Ctx, ctx.ClientIP(), os.Getenv("API_QUOTA"), 30*60*time.Second).Err() // 30 minutes to expire
 		} else {
 			valueInt, _ := strconv.Atoi(value)
 
 			if valueInt <= 0 {
-				limit, _ := r.TTL(database.Ctx, ctx.ClientIP()).Result()
-				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "Rate limit exceeded", "limit": limit})
+				limit, _ := ipDatabase.TTL(database.Ctx, ctx.ClientIP()).Result()
+				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "Rate limit exceededs", "limit": limit})
 				return
 			}
 		}
@@ -75,19 +74,30 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 		// Generate shorten URL
 		id := uuid.New().String()[:6]
 
-		r = database.CreateClient(0)
-		defer r.Close()
+		urlDatabase := database.CreateClient(0)
+		defer urlDatabase.Close()
 
 		if req.Expiry == 0 {
 			req.Expiry = 24 // 24 Hours (Default)
 		}
 
-		err = r.Set(database.Ctx, id, req.URL, req.Expiry*3600*time.Second).Err()
+		isPresent, err := urlDatabase.Exists(ctx, req.URL).Result()
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		if isPresent == 1 {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": "custom link is already used"})
+			return
+		}
+
+		err = urlDatabase.Set(database.Ctx, id, req.URL, req.Expiry*3600*time.Second).Err()
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		r.Decr(database.Ctx, ctx.ClientIP())
+		ipDatabase.Decr(database.Ctx, ctx.ClientIP())
 
 		resp := response{
 			URL:             req.URL,
@@ -97,10 +107,10 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 			XRateLimitReset: 30,
 		}
 
-		val, _ := r.Get(database.Ctx, ctx.ClientIP()).Result()
+		val, _ := ipDatabase.Get(database.Ctx, ctx.ClientIP()).Result()
 		resp.XRateRemaining, _ = strconv.Atoi(val)
 
-		ttl, _ := r.TTL(database.Ctx, ctx.ClientIP()).Result()
+		ttl, _ := ipDatabase.TTL(database.Ctx, ctx.ClientIP()).Result()
 		resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
 
 		resp.CustomShort = os.Getenv("DOMAIN") + "/" + id
