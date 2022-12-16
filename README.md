@@ -48,6 +48,8 @@ This will return a JSON response containing the shortened URL:
 }
 ```
 
+<img width="764" alt="Screenshot_20221216_094011" src="https://user-images.githubusercontent.com/73098407/208021586-c1c8aa00-b01e-40fb-b007-a6e797be6fa9.png">
+
 In order to prevent abuse of the URL shortening service, I have implemented rate limiting for all users. This means that you will be limited to creating no more than 10 shortened URLs within a 30 minute window. If you exceed this limit, your IP address will be blocked for a period of time.
 
 The rate limiting for this service is implemented using Redis. For each IP address that makes a request to the /shorten endpoint, a counter is incremented in Redis. If the counter exceeds the rate limit (10 in a 30 minute window), the IP address is added to a Redis set of blocked IPs.
