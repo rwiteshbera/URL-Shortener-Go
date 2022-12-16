@@ -41,7 +41,7 @@ type response struct {
 
 // It takes a URL as input, checks if it is valid, checks if the domain is valid, checks if the URL is using HTTPS, generates a short URL, and returns the short URL
 func ShortenURL(incomingRoutes *gin.Engine) {
-	incomingRoutes.POST("/api/v1", func(ctx *gin.Context) {
+	incomingRoutes.POST("/shorten", func(ctx *gin.Context) {
 		var req request
 
 		err := ctx.BindJSON(&req)
@@ -68,7 +68,7 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 			if valueInt <= 0 {
 				// Getting the time to live of the key `ctx.ClientIP()` from the database.
 				limit, _ := ipDatabase.TTL(database.Ctx, ctx.ClientIP()).Result()
-				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error(), "limit": limit})
+				ctx.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded", "limit": limit})
 				return
 			}
 		}
