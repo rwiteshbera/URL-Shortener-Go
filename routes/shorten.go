@@ -68,7 +68,7 @@ func ShortenURL(incomingRoutes *gin.Engine) {
 			if valueInt <= 0 {
 				// Getting the time to live of the key `ctx.ClientIP()` from the database.
 				limit, _ := ipDatabase.TTL(database.Ctx, ctx.ClientIP()).Result()
-				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "Rate limit exceededs", "limit": limit})
+				ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error(), "limit": limit})
 				return
 			}
 		}
