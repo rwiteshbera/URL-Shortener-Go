@@ -1,44 +1,38 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"os"
+	"sync"
 
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-
-	routes "github.com/rwiteshbera/URL-Shortener-Go/routes"
+	"github.com/gorilla/mux"
+	"github.com/rwiteshbera/URL-Shortener-Go/routes"
 )
 
 func main() {
-
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("Unable to load .env in main.go!")
+	config, err := routes.LoadConfig()
+	if err != nil {
+		log.Println(err.Error())
 	}
 
-	PORT := os.Getenv("PORT")
+	router := mux.NewRouter()
 
-	if PORT == "" {
-		PORT = "6001"
+	server := &http.Server{
+		Handler: router,
+		Addr:    config.SERVER_BASE_URL,
 	}
 
-	gin.SetMode(gin.ReleaseMode)
+	router.HandleFunc("/shorten", config.ShortenURL).Methods(http.MethodPost)
+	router.HandleFunc("/{id}", config.ResolveURL).Methods(http.MethodGet)
 
-	router := gin.New()
-	router.Use(gin.Recovery())
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := server.ListenAndServe(); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+	defer wg.Wait()
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Success"})
-	})
-
-	routes.ResolveURL(router)
-	routes.ShortenURL(router)
-
-	if err := router.Run(":" + PORT); err != nil {
-		log.Fatalln("Failed to start the server!")
-	}
-
-	fmt.Println("Server is listening on " + PORT)
 }
