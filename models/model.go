@@ -6,7 +6,7 @@ import (
 
 type RequestInfo struct {
 	OriginalURL string `json:"url"`
-	Expiry      uint64 `json:"expiry,omitempty"` // In hour
+	Expiry      uint32 `json:"expiry,omitempty"` // In hour
 }
 
 type URL struct {
@@ -16,7 +16,7 @@ type URL struct {
 }
 
 type ResponseInfo struct {
-	OriginalURL    string    `json:"original_url"`
-	ShortURL       string    `json:"short_url"`
-	ExpirationDate time.Time `json:"expiration_date"`
+	OriginalURL    string `json:"original_url"`
+	ShortURL       string `json:"short_url"`
+	ExpirationDate string `json:"expiration_date"`
 }

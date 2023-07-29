@@ -10,10 +10,7 @@ import (
 )
 
 func main() {
-	config, err := routes.LoadConfig()
-	if err != nil {
-		log.Println(err.Error())
-	}
+	config := routes.LoadConfig()
 
 	router := mux.NewRouter()
 
@@ -22,8 +19,17 @@ func main() {
 		Addr:    config.SERVER_BASE_URL,
 	}
 
+	// Server Health Check
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("success"))
+	}).Methods(http.MethodGet)
+
 	router.HandleFunc("/shorten", config.ShortenURL).Methods(http.MethodPost)
 	router.HandleFunc("/{id}", config.ResolveURL).Methods(http.MethodGet)
+
+	log.Println("Listening on:", config.SERVER_BASE_URL)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

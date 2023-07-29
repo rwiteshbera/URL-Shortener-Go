@@ -16,10 +16,8 @@ type ENV struct {
 	REDIS_PASSWORD  string
 }
 
-func LoadConfig() (*ENV, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, err
-	}
+func LoadConfig() *ENV {
+	godotenv.Load()
 
 	config := &ENV{
 		SERVER_BASE_URL: os.Getenv("SERVER_BASE_URL"),
@@ -31,5 +29,5 @@ func LoadConfig() (*ENV, error) {
 		REDIS_PASSWORD:  os.Getenv("REDIS_PASSWORD"),
 	}
 
-	return config, nil
+	return config
 }

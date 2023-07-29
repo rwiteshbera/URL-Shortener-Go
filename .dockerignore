@@ -1,0 +1,6 @@
+database/volumes
+.git
+.env
+.env.dev
+.gitignore
+database.yaml

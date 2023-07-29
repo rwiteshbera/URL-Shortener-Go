@@ -1,0 +1,43 @@
+version: '3'
+services:
+  server:
+    build: .
+    container_name: shortener
+    environment:
+      - SERVER_BASE_URL=server:5000
+      - DOMAIN=localhost:5000
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DATABASE=urlDB
+      - URL_COLLECTION=url
+      - REDIS_ADDRESS=redis:6379
+      - REDIS_PASSWORD=admin
+      - TZ=Asia/Kolkata
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - redis
+    restart: on-failure
+
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    volumes:
+      - ./database/volumes/mongodb:/data/db
+    ports:
+      - "27017:27017"
+    restart: always
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    command: redis-server --requirepass admin 
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    

@@ -24,6 +24,11 @@ func (config *ENV) ShortenURL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// If there is no expiry mentioned, default will be 1 year
+		if request.Expiry == 0 {
+			request.Expiry = 365 * 24
+		}
+
 		// Validate original URL : Check if the input is an actual url
 		if !govalidator.IsURL(request.OriginalURL) {
 			http.Error(w, "invalid url", http.StatusBadRequest)
@@ -62,7 +67,7 @@ func (config *ENV) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		response, err := json.Marshal(&models.ResponseInfo{
 			OriginalURL:    request.OriginalURL,
 			ShortURL:       helpers.EnforceHTTP(config.DOMAIN + "/" + payload.ShortURL),
-			ExpirationDate: payload.ExpirationDate,
+			ExpirationDate: payload.ExpirationDate.Local().Format(time.RFC1123),
 		})
 
 		if err != nil {
