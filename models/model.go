@@ -1,7 +1,7 @@
 package models
 
 import (
-	"time"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RequestInfo struct {
@@ -10,13 +10,15 @@ type RequestInfo struct {
 }
 
 type URL struct {
-	OriginalURL    string    `bson:"original_url"`
-	ShortURL       string    `bson:"short_url"`
-	ExpirationDate time.Time `bson:"expiration_date"`
+	OriginalURL    string             `bson:"original_url"`
+	ShortURL       string             `bson:"short_url"`
+	CreatedAt      primitive.DateTime `bson:"created_at"`
+	ExpirationDate primitive.DateTime `bson:"expiration_date"`
 }
 
 type ResponseInfo struct {
 	OriginalURL    string `json:"original_url"`
 	ShortURL       string `json:"short_url"`
 	ExpirationDate string `json:"expiration_date"`
+	CreatedAt      string `json:"created_at"`
 }

@@ -29,6 +29,10 @@ func main() {
 	router.HandleFunc("/shorten", config.ShortenURL).Methods(http.MethodPost)
 	router.HandleFunc("/{id}", config.ResolveURL).Methods(http.MethodGet)
 
+	// Admin API
+	// Delete Expired URL
+	router.HandleFunc("/purge", config.PurgeDatabase).Methods(http.MethodPost)
+
 	log.Println("Listening on:", config.SERVER_BASE_URL)
 
 	var wg sync.WaitGroup

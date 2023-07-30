@@ -63,7 +63,7 @@ func (config *ENV) ResolveURL(w http.ResponseWriter, r *http.Request) {
 
 			// Set the cache
 			// If the cache expiry time is more than 1 hour, then set TTL to 1 hour, else set the TTL 15 miutes
-			if time.Until(resultURL.ExpirationDate) > time.Hour {
+			if time.Until(resultURL.ExpirationDate.Time()) > time.Hour {
 				urlCache.Set(context.TODO(), resultURL.ShortURL, resultURL.OriginalURL, time.Hour)
 			} else {
 				urlCache.Set(context.TODO(), resultURL.ShortURL, resultURL.OriginalURL, 15*time.Minute)
