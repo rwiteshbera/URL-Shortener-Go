@@ -3,10 +3,11 @@ package routes
 import (
 	"context"
 	"fmt"
-	"github.com/redis/go-redis/v9"
-	"github.com/rwiteshbera/URL-Shortener-Go/helpers"
 	"net/http"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/rwiteshbera/URL-Shortener-Go/helpers"
 
 	"github.com/gorilla/mux"
 	"github.com/rwiteshbera/URL-Shortener-Go/database"
@@ -31,6 +32,7 @@ func (config *ENV) ResolveURL(w http.ResponseWriter, r *http.Request) {
 
 		// Check Redis Cache for url
 		value, _ := urlCache.Get(context.TODO(), shortId).Result()
+
 		// If Original url is not in cache
 		if value == "" {
 			// Create MongoDB Client
@@ -60,7 +62,12 @@ func (config *ENV) ResolveURL(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// Set the cache
-			urlCache.Set(context.TODO(), resultURL.ShortURL, resultURL.OriginalURL, time.Hour)
+			// If the cache expiry time is more than 1 hour, then set TTL to 1 hour, else set the TTL 15 miutes
+			if time.Until(resultURL.ExpirationDate) > time.Hour {
+				urlCache.Set(context.TODO(), resultURL.ShortURL, resultURL.OriginalURL, time.Hour)
+			} else {
+				urlCache.Set(context.TODO(), resultURL.ShortURL, resultURL.OriginalURL, 15*time.Minute)
+			}
 
 			// Redirect the URL
 			http.Redirect(w, r, helpers.EnforceHTTP(resultURL.OriginalURL), http.StatusPermanentRedirect)
