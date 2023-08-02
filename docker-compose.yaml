@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   server:
     build: .
@@ -30,8 +30,9 @@ services:
 
   redis:
     image: redis:7.0
+    build: ./database/redis
     container_name: redis
-    command: redis-server --requirepass admin
+    command: redis-server --requirepass admin --include /usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
     restart: always

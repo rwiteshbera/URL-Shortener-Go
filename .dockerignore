@@ -1,4 +1,5 @@
 database/volumes
+database/redis
 .git
 .env
 .env.dev
