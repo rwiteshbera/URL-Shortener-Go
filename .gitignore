@@ -1,3 +1,4 @@
 *.exe
 .env
 volumes
+a.yaml

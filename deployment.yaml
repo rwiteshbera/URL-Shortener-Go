@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: url
+  template:
+    metadata:
+      labels:
+        app: url
+    spec:
+      containers:
+      - name: url-shortener
+        image: rwiteshbera/url-shortener:1.0
+        ports:
+        - containerPort: 5000
+        env:
+          - name: SERVER_BASE_URL
+            value: localhost:5000
+          - name: DOMAIN
+            value: localhost:5000
+          - name: MONGO_URI
+            value: mongodb://mongodb:27017
+          - name: MONGO_DATABASE
+            value: urlDB
+          - name: URL_COLLECTION
+            value: url
+          - name: REDIS_ADDRESS
+            value: redis:6379
+          - name: REDIS_PASSWORD
+            value: admin
+          - name: TZ
+            value: Asia/Kolkata
+
+
