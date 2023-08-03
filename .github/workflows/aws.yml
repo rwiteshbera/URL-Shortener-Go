@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-south-1                
-  ECR_REPOSITORY: url-shortener     
+  ECR_REPOSITORY: url-shortener  
 
 permissions:
   contents: read
@@ -32,12 +32,18 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
+    - name: Get version tag
+      id: vars
+      run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
+    - name: Test output
+      run: echo ${{ steps.vars.outputs.version }}
+
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{env.ECR_REPOSITORY}}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ steps.vars.outputs.version }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
