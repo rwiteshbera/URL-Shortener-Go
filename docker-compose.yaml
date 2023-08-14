@@ -1,23 +1,23 @@
 version: "3.8"
 services:
-  server:
+  shortener:
     build: .
     container_name: shortener
     environment:
-      - SERVER_BASE_URL=server:5000
-      - DOMAIN=localhost:5000
+      - SERVER_BASE_URL=shortener:5000
+      - DOMAIN=localhost:8080
       - MONGO_URI=mongodb://mongodb:27017
       - MONGO_DATABASE=urlDB
       - URL_COLLECTION=url
       - REDIS_ADDRESS=redis:6379
       - REDIS_PASSWORD=admin
       - TZ=Asia/Kolkata
-    ports:
-      - "5000:5000"
     depends_on:
       - mongodb
       - redis
     restart: on-failure
+    networks:
+      - urlnetwork    
 
   mongodb:
     image: mongo:5.0
@@ -27,6 +27,8 @@ services:
     ports:
       - "27017:27017"
     restart: always
+    networks:
+      - urlnetwork
 
   redis:
     image: redis:7.0
@@ -41,10 +43,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./database/redis:/usr/local/etc/redis/
     deploy:
       resources:
         limits:
           memory: 512M
         reservations:
           memory: 128M
+    networks:
+      - urlnetwork
+    
+  nginx:
+    image: nginx:1.24.0-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./config:/etc/nginx
+    restart: on-failure
+    networks:
+      - urlnetwork
+    depends_on:
+      - shortener
           
+networks:
+  urlnetwork:
+    driver: bridge
