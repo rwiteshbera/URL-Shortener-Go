@@ -43,13 +43,13 @@ Enjoy using the project!
 
 ### Demo
 Generate URL
-![API](/assets/short1.png)
 
-Database Purge
-![API](/assets/short2.png)
+<img src="/assets/short1.png" width="640px"/>
 
 AWS ECR
-![AWS ECR](/assets//ecr.png)
+
+<img src="/assets//ecr.png" width="640px"/>
+
 
 
 
