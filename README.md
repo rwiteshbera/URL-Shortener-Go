@@ -43,6 +43,8 @@ Enjoy using the project!
 
 ### Demo
 Generate URL
+- url : Add webpage url
+- expiry: Add expiry time (in Hour)
 
 <img src="/assets/short1.png" width="640px"/>
 
